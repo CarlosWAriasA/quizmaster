@@ -1,10 +1,14 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useContext } from "react";
 import Logo from "../../assets/logo.png";
 import { Button, Label, TextInput } from "flowbite-react";
 import { ToastHelper } from "../../utils/ToastHelper";
 import { HiMail, HiLockClosed } from "react-icons/hi";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 const Login: React.FC = () => {
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
@@ -13,7 +17,7 @@ const Login: React.FC = () => {
     return regex.test(email);
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!email) {
@@ -36,9 +40,14 @@ const Login: React.FC = () => {
       return;
     }
 
-    // 5. All good → call backend and show success
-    // await api.login({ email, password });
-    ToastHelper.success("Login successful");
+    try {
+      await login(email, password);
+      navigate("/home");
+      ToastHelper.success("Login successful");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Login failed";
+      ToastHelper.error(msg);
+    }
   };
 
   return (

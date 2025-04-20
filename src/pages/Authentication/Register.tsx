@@ -1,10 +1,14 @@
-import React, { useState, FormEvent } from "react";
+import React, { useState, FormEvent, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 import Logo from "../../assets/logo.png";
 import { Button, Label, TextInput } from "flowbite-react";
 import { HiUser, HiMail, HiLockClosed } from "react-icons/hi";
 import { ToastHelper } from "../../utils/ToastHelper";
 
 const Register: React.FC = () => {
+  const { register } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -15,7 +19,7 @@ const Register: React.FC = () => {
     return regex.test(email);
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!fullName.trim()) {
@@ -43,9 +47,14 @@ const Register: React.FC = () => {
       return;
     }
 
-    // Aquí iría la llamada al backend para registrar usuario
-    ToastHelper.success("Account created successfully");
-    // opcional: limpiar campos o redirigir a /login
+    try {
+      await register(fullName, email, password);
+      ToastHelper.success("Account created successfully");
+      navigate("/login");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Registration failed";
+      ToastHelper.error(msg);
+    }
   };
 
   return (
