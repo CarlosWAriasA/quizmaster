@@ -8,11 +8,13 @@ import { AuthProvider } from "./provider/AuthProvider";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
-    <ToastContainer />
+    <>
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+          <ToastContainer />
+        </AuthProvider>
+      </BrowserRouter>
+    </>
   </React.StrictMode>
 );

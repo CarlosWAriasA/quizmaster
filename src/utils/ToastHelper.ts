@@ -12,6 +12,10 @@ export class ToastHelper {
     theme: "dark",
   };
 
+  static loading(message: string) {
+    return toast.loading(message);
+  }
+
   /**
    * Muestra un toast de error.
    * @param message Mensaje a mostrar

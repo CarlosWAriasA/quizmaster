@@ -5,12 +5,17 @@ import { ToastHelper } from "../../utils/ToastHelper";
 import { HiMail, HiLockClosed } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { useErrorHandler } from "../../hooks/userErrorHandler";
+import { Link } from "react-router-dom";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const Login: React.FC = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const { handleError } = useErrorHandler();
+  const [loading, setLoading] = useState(false);
 
   const validateEmail = (email: string): boolean => {
     const regex = /^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/;
@@ -21,17 +26,17 @@ const Login: React.FC = () => {
     e.preventDefault();
 
     if (!email) {
-      ToastHelper.error("Please enter your email");
+      ToastHelper.warning("Please enter your email");
       return;
     }
 
     if (!validateEmail(email)) {
-      ToastHelper.error("Invalid email format");
+      ToastHelper.warning("Invalid email format");
       return;
     }
 
     if (!password) {
-      ToastHelper.error("Please enter your password");
+      ToastHelper.warning("Please enter your password");
       return;
     }
 
@@ -40,13 +45,15 @@ const Login: React.FC = () => {
       return;
     }
 
+    setLoading(true);
     try {
       await login(email, password);
-      navigate("/home");
       ToastHelper.success("Login successful");
+      navigate("/home");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Login failed";
-      ToastHelper.error(msg);
+      handleError(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,7 +77,6 @@ const Login: React.FC = () => {
               id="email"
               type="email"
               placeholder="you@example.com"
-              required
               icon={HiMail}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -84,27 +90,34 @@ const Login: React.FC = () => {
               id="password"
               type="password"
               placeholder="••••••••"
-              required
               icon={HiLockClosed}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1"
             />
           </div>
-
-          <Button type="submit" color={"purple"} size="lg" className="w-full">
-            Sign In
-          </Button>
+          {loading ? (
+            <LoadingSpinner width={50} height={50} />
+          ) : (
+            <Button
+              type="submit"
+              color={"purple"}
+              size="lg"
+              className="w-full cursor-pointer"
+            >
+              Sign In
+            </Button>
+          )}
         </form>
 
         <p className="mt-6 text-center text-gray-400 text-sm">
           Don’t have an account?{" "}
-          <a
-            href="/register"
+          <Link
+            to="/register"
             className="text-purple-400 hover:text-purple-300 transition-colors"
           >
             Register here
-          </a>
+          </Link>
         </p>
       </div>
     </div>

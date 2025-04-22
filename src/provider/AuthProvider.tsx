@@ -1,6 +1,12 @@
 import { useState, useEffect, ReactNode } from "react";
 import { RequestHelper } from "../utils/RequestHelper";
 import { AuthContext } from "../context/AuthContext";
+import {
+  ACCESS_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
+  USER_ID_KEY,
+} from "../utils/constants";
+import { useNavigate } from "react-router-dom";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -8,45 +14,70 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loadingSession, setLoadingSession] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    setIsAuthenticated(!!token);
+    const checkSession = async () => {
+      const valid = await isTokenValid();
+      setIsAuthenticated(valid);
+      setTimeout(() => {
+        setLoadingSession(false);
+      }, 1000);
+    };
+
+    checkSession();
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const isTokenValid = async (): Promise<boolean> => {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!token) return false;
+
+    try {
+      await RequestHelper.get("Auth/validateToken", token);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const login = async (email: string, password: string) => {
     const data = await RequestHelper.post<{
       accessToken: string;
       refreshToken: string;
       userId: number;
-    }>("/api/auth/login", { userName: username, password });
+    }>("Auth/login", { email, password });
 
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
-    localStorage.setItem("userId", String(data.userId));
+    localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+    localStorage.setItem(USER_ID_KEY, String(data.userId));
     setIsAuthenticated(true);
   };
 
   const register = async (
-    fullName: string,
+    userName: string,
     email: string,
     password: string
   ) => {
-    await RequestHelper.post("/api/auth/register", {
-      fullName,
+    await RequestHelper.post("Auth/register", {
+      userName,
       email,
       password,
     });
   };
 
   const logout = () => {
-    localStorage.clear();
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_ID_KEY);
     setIsAuthenticated(false);
-    window.location.href = "/login";
+    navigate("/login", { replace: true });
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, login, register, logout, loadingSession }}
+    >
       {children}
     </AuthContext.Provider>
   );

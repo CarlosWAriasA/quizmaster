@@ -5,6 +5,9 @@ import Logo from "../../assets/logo.png";
 import { Button, Label, TextInput } from "flowbite-react";
 import { HiUser, HiMail, HiLockClosed } from "react-icons/hi";
 import { ToastHelper } from "../../utils/ToastHelper";
+import { useErrorHandler } from "../../hooks/userErrorHandler";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import { Link } from "react-router-dom";
 
 const Register: React.FC = () => {
   const { register } = useContext(AuthContext);
@@ -13,6 +16,8 @@ const Register: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const { handleError } = useErrorHandler();
+  const [loading, setLoading] = useState(false);
 
   const validateEmail = (email: string): boolean => {
     const regex = /^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/;
@@ -23,19 +28,23 @@ const Register: React.FC = () => {
     e.preventDefault();
 
     if (!fullName.trim()) {
-      ToastHelper.error("Please enter your full name");
+      ToastHelper.warning("Please enter your full name");
       return;
     }
+    if (fullName.length < 6) {
+      ToastHelper.warning("Full name must be at least 6 characters long");
+    }
+
     if (!email) {
-      ToastHelper.error("Please enter your email address");
+      ToastHelper.warning("Please enter your email address");
       return;
     }
     if (!validateEmail(email)) {
-      ToastHelper.error("Please enter a valid email address");
+      ToastHelper.warning("Please enter a valid email address");
       return;
     }
     if (!password) {
-      ToastHelper.error("Please enter your password");
+      ToastHelper.warning("Please enter your password");
       return;
     }
     if (password.length < 6) {
@@ -43,17 +52,19 @@ const Register: React.FC = () => {
       return;
     }
     if (password !== confirmPassword) {
-      ToastHelper.error("Passwords do not match");
+      ToastHelper.warning("Passwords do not match");
       return;
     }
 
+    setLoading(true);
     try {
       await register(fullName, email, password);
       ToastHelper.success("Account created successfully");
       navigate("/login");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Registration failed";
-      ToastHelper.error(msg);
+      handleError(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,7 +88,6 @@ const Register: React.FC = () => {
               id="fullname"
               type="text"
               placeholder="John Doe"
-              required
               icon={HiUser}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
@@ -91,7 +101,6 @@ const Register: React.FC = () => {
               id="email"
               type="email"
               placeholder="name@example.com"
-              required
               icon={HiMail}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -105,7 +114,6 @@ const Register: React.FC = () => {
               id="password"
               type="password"
               placeholder="••••••••"
-              required
               icon={HiLockClosed}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -119,7 +127,6 @@ const Register: React.FC = () => {
               id="confirmPassword"
               type="password"
               placeholder="••••••••"
-              required
               icon={HiLockClosed}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -127,19 +134,23 @@ const Register: React.FC = () => {
             />
           </div>
 
-          <Button type="submit" size="lg" className="w-full">
-            Register
-          </Button>
+          {loading ? (
+            <LoadingSpinner width={50} height={50} />
+          ) : (
+            <Button type="submit" size="lg" className="w-full cursor-pointer">
+              Register
+            </Button>
+          )}
         </form>
 
         <p className="mt-6 text-center text-gray-400 text-sm">
           Already have an account?{" "}
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="text-purple-400 hover:text-purple-300 transition-colors"
           >
             Sign In
-          </a>
+          </Link>
         </p>
       </div>
     </div>

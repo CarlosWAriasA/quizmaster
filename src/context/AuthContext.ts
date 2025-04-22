@@ -9,6 +9,7 @@ export interface AuthContextType {
     password: string
   ) => Promise<void>;
   logout: () => void;
+  loadingSession: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -16,4 +17,5 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => {},
   logout: () => {},
+  loadingSession: true,
 });
