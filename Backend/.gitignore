@@ -1,0 +1,40 @@
+# Compiled DLLs y ensamblados
+bin/
+obj/
+
+.vs
+
+# Archivos de paquetes NuGet
+*.nupkg
+# La carpeta de paquetes descargados (si se usa en vez de NuGet Package Restore)
+packages/
+
+# Archivos de configuración específicos del usuario
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archivos temporales y de compilación
+*.cache
+*.log
+*.vspscc
+*_i.c
+*_p.c
+*_h.h
+*.tmp
+*.temp
+
+# Carpetas de Visual Studio
+.vs/
+.vscode/
+
+# Archivos de publicación
+publish/
+
+# Archivos de test (por ejemplo, los generados por NCrunch)
+.ncrunch*
+
+# Otros archivos que no se deben incluir
+_ReSharper*/
+*.DotSettings.user
