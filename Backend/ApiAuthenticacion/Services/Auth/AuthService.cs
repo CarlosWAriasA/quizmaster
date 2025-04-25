@@ -49,7 +49,7 @@ namespace QuizMaster.Services.Auth
         {
             if (string.IsNullOrWhiteSpace(model.UserName) || model.UserName.Length < 6)
             {
-                throw new ArgumentException("Name must be at least 3 characters long");
+                throw new ArgumentException("Name must be at least 6 characters long");
             }
 
             if (string.IsNullOrWhiteSpace(model.Email) || !model.Email.Contains("@"))
