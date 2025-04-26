@@ -1,3 +1,6 @@
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID_KEY } from "./constants";
+import { clearSession } from "./AuthHelper";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface RequestOptions {
@@ -9,15 +12,11 @@ interface RequestOptions {
 
 async function baseRequest<T = unknown>(
   endpoint: string,
-  {
-    data,
-    token,
-    headers = {},
-    retrying = false,
-    ...customConfig
-  }: RequestOptions = {},
+  options: RequestOptions = {},
   method: string
 ): Promise<T> {
+  const { data, headers = {}, retrying = false, ...customConfig } = options;
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
   const config: RequestInit = {
     method,
     headers: {
@@ -33,22 +32,34 @@ async function baseRequest<T = unknown>(
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, config);
+  if (response.status === 401) {
+    if (retrying) {
+      clearSession();
+      window.location.href = "/login?expired=true";
+      throw new Error("Session expired. Redirecting to login...");
+    }
 
-  if (response.status === 401 && !retrying) {
     const newAccessToken = await tryRefreshToken();
     if (newAccessToken) {
       return baseRequest<T>(
         endpoint,
-        { data, token: newAccessToken, headers, retrying: true },
+        {
+          ...options,
+          token: newAccessToken,
+          retrying: true,
+        },
         method
       );
     } else {
-      throw new Error("Session expired. Please log in again.");
+      clearSession();
+      window.location.href = "/login?expired=true";
+      throw new Error("Session expired. Redirecting to login...");
     }
   }
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.log(response);
     throw new Error(errorText || response.statusText);
   }
 
@@ -57,22 +68,22 @@ async function baseRequest<T = unknown>(
 }
 
 async function tryRefreshToken(): Promise<string | null> {
-  const refreshToken = localStorage.getItem("refreshToken");
-  const userId = localStorage.getItem("userId");
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  const userId = localStorage.getItem(USER_ID_KEY);
   if (!refreshToken || !userId) return null;
 
   try {
-    const res = await fetch(`${API_URL}/api/auth/refreshToken`, {
+    const res = await fetch(`${API_URL}Auth/refreshToken`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: Number(userId), refreshToken }),
     });
-
+    console.log(res);
     if (!res.ok) return null;
 
     const data = await res.json();
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
     return data.accessToken;
   } catch {
     return null;

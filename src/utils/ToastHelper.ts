@@ -16,38 +16,18 @@ export class ToastHelper {
     return toast.loading(message);
   }
 
-  /**
-   * Muestra un toast de error.
-   * @param message Mensaje a mostrar
-   * @param options Opciones adicionales (sobreponibles)
-   */
   static error(message: string, options?: ToastOptions): void {
     toast.error(message, { ...this.defaultOptions, ...options });
   }
 
-  /**
-   * Muestra un toast de éxito.
-   * @param message Mensaje a mostrar
-   * @param options Opciones adicionales (sobreponibles)
-   */
   static success(message: string, options?: ToastOptions): void {
     toast.success(message, { ...this.defaultOptions, ...options });
   }
 
-  /**
-   * Muestra un toast de advertencia.
-   * @param message Mensaje a mostrar
-   * @param options Opciones adicionales (sobreponibles)
-   */
   static warning(message: string, options?: ToastOptions): void {
     toast.warning(message, { ...this.defaultOptions, ...options });
   }
 
-  /**
-   * Muestra un toast informativo.
-   * @param message Mensaje a mostrar
-   * @param options Opciones adicionales (sobreponibles)
-   */
   static info(message: string, options?: ToastOptions): void {
     toast.info(message, { ...this.defaultOptions, ...options });
   }

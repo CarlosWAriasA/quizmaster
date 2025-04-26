@@ -8,6 +8,7 @@ import HomePage from "./pages/HomePage";
 import PublicRoute from "./components/PublicRoute";
 import LoadingSpinner from "./components/LoadingSpinner";
 import CreateQuiz from "./pages/Quiz/CreateQuiz";
+import MyQuizzes from "./pages/Quiz/MyQuizzes";
 
 function App() {
   const { isAuthenticated, loadingSession } = useContext(AuthContext);
@@ -65,6 +66,15 @@ function App() {
         element={
           <PrivateRoute>
             <CreateQuiz />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/quiz/list"
+        element={
+          <PrivateRoute>
+            <MyQuizzes />
           </PrivateRoute>
         }
       />

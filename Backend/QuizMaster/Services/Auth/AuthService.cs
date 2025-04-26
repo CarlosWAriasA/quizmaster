@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using QuizMaster.Models;
-using QuizMaster.Services.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,7 +15,7 @@ namespace QuizMaster.Services.Auth
     {
         public async Task<TokenResponseDTO?> Login(UserDTO model)
         {
-            if (string.IsNullOrWhiteSpace(model.Email) || !model.Email.Contains("@"))
+            if (string.IsNullOrWhiteSpace(model.Email) || !model.Email.Contains('@'))
             {
                 throw new ArgumentException("Invalid email address");
             }
@@ -44,7 +43,6 @@ namespace QuizMaster.Services.Auth
             return await CreateTokenResponse(user);
         }
 
-
         public async Task<User?> Register(UserDTO model)
         {
             if (string.IsNullOrWhiteSpace(model.UserName) || model.UserName.Length < 6)
@@ -52,7 +50,7 @@ namespace QuizMaster.Services.Auth
                 throw new ArgumentException("Name must be at least 6 characters long");
             }
 
-            if (string.IsNullOrWhiteSpace(model.Email) || !model.Email.Contains("@"))
+            if (string.IsNullOrWhiteSpace(model.Email) || !model.Email.Contains('@'))
             {
                 throw new ArgumentException("Invalid email address");
             }
@@ -91,6 +89,8 @@ namespace QuizMaster.Services.Auth
 
         public async Task<TokenResponseDTO?> RefreshToken(RefreshTokenDTO model)
         {
+            if (string.IsNullOrWhiteSpace(model.RefreshToken)) return null;
+
             User? user = await ValidateRefreshToken(model.UserId, model.RefreshToken);
 
             if (user is null)
@@ -114,7 +114,7 @@ namespace QuizMaster.Services.Auth
         {
             User? user = await context.Users.FindAsync(userId);
 
-            if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpireIn <= DateTime.Now)
+            if (user is null || refreshToken is null || user.RefreshToken != refreshToken || user.RefreshTokenExpireIn <= DateTime.Now)
             {
                 return null;
             }
@@ -155,7 +155,7 @@ namespace QuizMaster.Services.Auth
                 issuer: configuration.GetValue<string>("AppSettings:Issuer"),
                 audience: configuration.GetValue<string>("AppSettings:Audience"),
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(1),
+                expires: DateTime.UtcNow.AddHours(1),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);

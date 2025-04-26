@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Label, TextInput, Textarea } from "flowbite-react";
 import { ToastHelper } from "../../utils/ToastHelper";
+import { RequestHelper } from "../../utils/RequestHelper";
+import { useErrorHandler } from "../../hooks/userErrorHandler";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 interface Question {
   text: string;
@@ -13,10 +16,12 @@ const CreateQuiz = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([
     { text: "", options: ["", ""], correctIndexes: [] },
   ]);
   const [currentPage, setCurrentPage] = useState(0);
+  const { handleError } = useErrorHandler();
 
   const handleQuestionChange = (index: number, value: string) => {
     const updated = [...questions];
@@ -77,7 +82,7 @@ const CreateQuiz = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim()) {
       ToastHelper.warning("Please enter a quiz title");
       return;
@@ -102,8 +107,26 @@ const CreateQuiz = () => {
       return;
     }
 
-    console.log({ title, description, questions });
-    ToastHelper.success("Quiz created successfully");
+    setLoading(true);
+    try {
+      await RequestHelper.post("Quiz/create", {
+        Title: title,
+        Description: description,
+        Questions: questions.map((q) => ({
+          Title: q.text,
+          Options: q.options.map((opt, idx) => ({
+            Title: opt,
+            IsCorrect: q.correctIndexes.includes(idx),
+          })),
+        })),
+      });
+      ToastHelper.success("Quiz created successfully");
+      navigate("/quiz/list");
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const question = questions[currentPage];
@@ -115,7 +138,7 @@ const CreateQuiz = () => {
           <h1 className="text-3xl font-bold">Create New Quiz</h1>
           <Button
             color="gray"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate(-1)}
             className="cursor-pointer"
           >
             Back
@@ -244,9 +267,17 @@ const CreateQuiz = () => {
           <Button
             color="purple"
             onClick={handleSubmit}
-            className="cursor-pointer"
+            className="cursor-pointer flex justify-center items-center gap-2"
+            disabled={loading}
           >
-            Save Quiz
+            {loading ? (
+              <>
+                <LoadingSpinner width={20} height={20} />
+                Saving...
+              </>
+            ) : (
+              "Save Quiz"
+            )}
           </Button>
         </div>
       </div>

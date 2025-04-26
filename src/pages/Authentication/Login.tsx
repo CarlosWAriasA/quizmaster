@@ -1,9 +1,9 @@
-import { FormEvent, useState, useContext } from "react";
+import { FormEvent, useState, useContext, useEffect } from "react";
 import Logo from "../../assets/logo.png";
 import { Button, Label, TextInput } from "flowbite-react";
 import { ToastHelper } from "../../utils/ToastHelper";
 import { HiMail, HiLockClosed } from "react-icons/hi";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useErrorHandler } from "../../hooks/userErrorHandler";
 import { Link } from "react-router-dom";
@@ -16,6 +16,14 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>("");
   const { handleError } = useErrorHandler();
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("expired") === "true") {
+      ToastHelper.warning("Your session expired. Please log in again.");
+    }
+  }, [location.search]);
 
   const validateEmail = (email: string): boolean => {
     const regex = /^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/;

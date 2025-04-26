@@ -22,4 +22,6 @@ dist-ssr
 *.njsproj
 *.sw?
 
+appsettings.json
+
 .env

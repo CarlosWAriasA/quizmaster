@@ -9,6 +9,7 @@
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpireIn { get; set; }
         public DateTime DateCreated { get; set; }
+        public DateTime? LastUpdate { get; set; }
     }
 }
 
