@@ -100,6 +100,6 @@ export const RequestHelper = {
   put: <T = unknown>(endpoint: string, data?: unknown, token?: string) =>
     baseRequest<T>(endpoint, { data, token }, "PUT"),
 
-  del: <T = unknown>(endpoint: string, token?: string) =>
+  delete: <T = unknown>(endpoint: string, token?: string) =>
     baseRequest<T>(endpoint, { token }, "DELETE"),
 };

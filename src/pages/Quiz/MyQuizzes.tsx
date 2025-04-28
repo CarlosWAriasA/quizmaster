@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+"use client";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "flowbite-react";
 import { RequestHelper } from "../../utils/RequestHelper";
 import { useErrorHandler } from "../../hooks/userErrorHandler";
 import { useNavigate } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
+import { HiPencilAlt, HiTrash, HiShare, HiDuplicate } from "react-icons/hi";
+import { Tooltip, Modal } from "flowbite-react";
+import { ToastHelper } from "../../utils/ToastHelper";
 
 interface Quiz {
   id: number;
@@ -21,35 +25,83 @@ const MyQuizzes = () => {
   const [loading, setLoading] = useState(true);
   const { handleError } = useErrorHandler();
   const navigate = useNavigate();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [quizToDelete, setQuizToDelete] = useState<number | null>(null);
+
+  const fetchQuizzes = useCallback(async () => {
+    try {
+      const res = await RequestHelper.get<ListQuizResponse>("Quiz/list");
+      setQuizzes(res.data);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
 
   useEffect(() => {
-    const fetchQuizzes = async () => {
-      try {
-        const res = await RequestHelper.get<ListQuizResponse>("Quiz/list");
-        console.log(res);
-        setQuizzes(res.data);
-      } catch (error) {
-        console.log(error);
-        handleError(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchQuizzes();
-  });
+  }, [fetchQuizzes]);
 
   const handleCreateNewQuiz = () => {
-    navigate("/quiz/create");
+    navigate("/quiz/edit");
   };
 
   const handleGoBack = () => {
     navigate(-1);
   };
 
+  const confirmDelete = (id: number) => {
+    setQuizToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!quizToDelete) return;
+    try {
+      await RequestHelper.delete(`Quiz/${quizToDelete}`);
+      setQuizzes((prev) => prev.filter((q) => q.id !== quizToDelete));
+      fetchQuizzes();
+      ToastHelper.success("Quiz deleted successfully");
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setShowDeleteModal(false);
+      setQuizToDelete(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white py-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
+        <Modal
+          show={showDeleteModal}
+          size="md"
+          popup
+          onClose={() => setShowDeleteModal(false)}
+        >
+          <div className="p-6 text-center">
+            <h3 className="mb-5 text-lg font-bold text-gray-900 dark:text-white">
+              Are you sure you want to delete this Quiz?
+            </h3>
+            <div className="flex justify-center gap-4">
+              <Button
+                color="red"
+                onClick={handleDelete}
+                className="w-32 cursor-pointer"
+              >
+                Yes, delete
+              </Button>
+              <Button
+                onClick={() => setShowDeleteModal(false)}
+                className="w-24 cursor-pointer"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
         <div className="flex justify-between items-center mb-8">
           <Button
             color="gray"
@@ -88,24 +140,74 @@ const MyQuizzes = () => {
           ) : quizzes.length === 0 ? (
             <div className="text-center text-gray-400">No quizzes found.</div>
           ) : (
-            <div className="grid gap-6">
+            <div className="grid gap-2">
               {quizzes.map((quiz) => (
                 <div
                   key={quiz.id}
                   className="p-5 bg-gray-700 rounded-xl shadow-md border border-gray-600 hover:shadow-lg transition-shadow"
                 >
-                  <h2 className="text-xl font-bold text-white mb-2">
-                    {quiz.title}
-                  </h2>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h2 className="text-xl font-bold text-white">
+                        {quiz.title}
+                      </h2>
+                      {quiz.description && (
+                        <p className="text-gray-300">{quiz.description}</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Created on:{" "}
+                        {new Date(quiz.dateCreated).toLocaleString()}
+                      </p>
+                    </div>
 
-                  {quiz.description && (
-                    <p className="text-gray-300 mb-3">{quiz.description}</p>
-                  )}
+                    <div className="flex gap-2">
+                      <Tooltip content="Edit Quiz">
+                        <Button
+                          color="purple"
+                          size="xs"
+                          onClick={() => navigate(`/quiz/edit?id=${quiz.id}`)}
+                          className="cursor-pointer"
+                        >
+                          <HiPencilAlt className="h-5 w-5" />
+                        </Button>
+                      </Tooltip>
 
-                  <p className="text-xs text-gray-400">
-                    Created on:{" "}
-                    {new Date(quiz.dateCreated).toLocaleDateString()}
-                  </p>
+                      <Tooltip content="Clone Quiz">
+                        <Button
+                          color="yellow"
+                          size="xs"
+                          onClick={() =>
+                            navigate(`/quiz/edit?id=${quiz.id}&clone=true`)
+                          }
+                          className="cursor-pointer"
+                        >
+                          <HiDuplicate className="h-5 w-5" />
+                        </Button>
+                      </Tooltip>
+
+                      <Tooltip content="Delete Quiz">
+                        <Button
+                          color="red"
+                          size="xs"
+                          onClick={() => confirmDelete(quiz.id)}
+                          className="cursor-pointer"
+                        >
+                          <HiTrash className="h-5 w-5" />
+                        </Button>
+                      </Tooltip>
+
+                      <Tooltip content="Share Quiz">
+                        <Button
+                          color="blue"
+                          size="xs"
+                          onClick={() => console.log("Share", quiz.id)}
+                          className="cursor-pointer"
+                        >
+                          <HiShare className="h-5 w-5" />
+                        </Button>
+                      </Tooltip>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

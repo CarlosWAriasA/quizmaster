@@ -60,6 +60,47 @@ namespace QuizMaster.Services.Quiz
             }
         }
 
+        public async Task Delete(int quizId)
+        {
+            try
+            {
+                Entities.Quiz? quiz = await context.Quiz
+                    .Include(q => q.Questions)
+                    .ThenInclude(q => q.Options)
+                    .FirstOrDefaultAsync(q => q.Id == quizId);
+
+                if (quiz == null)
+                {
+                    throw new ArgumentException("Quiz not found.");
+                }
+
+                context.Quiz.Remove(quiz);
+                await context.SaveChangesAsync();
+            }
+            catch (ArgumentException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while deleting the quiz: " + ex.Message);
+            }
+        }
+
+        public async Task<Entities.Quiz?> GetById(int quizId, int userId)
+        {
+            try
+            {
+                Entities.Quiz? quiz = await context.Quiz.Include(q => q.Questions).ThenInclude(q => q.Options).FirstOrDefaultAsync(q => q.Id == quizId && q.UserId == userId);
+
+                return quiz;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error retrieving quiz: " + ex.Message);
+            }
+        }
+
         public async Task<List<Entities.Quiz>> List(int userId)
         {
             try
@@ -80,10 +121,100 @@ namespace QuizMaster.Services.Quiz
         }
 
 
-        public Task<Entities.Quiz?> Update(QuizDTO model)
+        public async Task<Entities.Quiz?> Update(QuizDTO model)
         {
-            throw new NotImplementedException();
+            try
+            {
+                Entities.Quiz? existingQuiz = await context.Quiz
+                    .Include(q => q.Questions).ThenInclude(q => q.Options)
+                    .FirstOrDefaultAsync(q => q.Id == model.Id);
+
+                if (existingQuiz == null)
+                {
+                    throw new ArgumentException("Quiz not found");
+                }
+
+                if (existingQuiz.UserId != model.UserId)
+                {
+                    throw new ArgumentException("You can only edit quizzes you have created.");
+                }
+
+                existingQuiz.Title = model.Title;
+                existingQuiz.Description = model.Description;
+
+                HashSet<int> updatedQuestionIds = [];
+
+                foreach (var questionDto in model.Questions)
+                {
+                    QuizQuestion? existingQuestion = existingQuiz.Questions.FirstOrDefault(q => q.Id == questionDto.Id);
+
+                    if (existingQuestion != null)
+                    {
+                        existingQuestion.Title = questionDto.Title;
+                        existingQuestion.LastUpdate = DateTime.Now;
+                        updatedQuestionIds.Add(existingQuestion.Id);
+
+                        
+                        HashSet<int> updatedOptionIds = [];
+
+                        foreach (var optionDto in questionDto.Options)
+                        {
+                            QuizOption? existingOption = existingQuestion.Options.FirstOrDefault(o => o.Id == optionDto.Id);
+
+                            if (existingOption != null)
+                            {
+                                existingOption.Title = optionDto.Title;
+                                existingOption.IsCorrect = optionDto.IsCorrect;
+                                existingOption.LastUpdate = DateTime.Now;
+                                updatedOptionIds.Add(existingOption.Id);
+                            }
+                            else
+                            {
+                                existingQuestion.Options.Add(new QuizOption
+                                {
+                                    Title = optionDto.Title,
+                                    IsCorrect = optionDto.IsCorrect,
+                                    DateCreated = DateTime.Now
+                                });
+                            }
+                        }
+
+                        existingQuestion.Options.RemoveAll(o => !updatedOptionIds.Contains(o.Id));
+                    }
+                    else
+                    {
+                        QuizQuestion newQuestion = new()
+                        {
+                            Title = questionDto.Title,
+                            DateCreated = DateTime.Now,
+                            Options = questionDto.Options.Select(o => new QuizOption
+                            {
+                                Title = o.Title,
+                                IsCorrect = o.IsCorrect,
+                                DateCreated = DateTime.Now
+                            }).ToList()
+                        };
+
+                        existingQuiz.Questions.Add(newQuestion);
+                    }
+                }
+
+                existingQuiz.Questions.RemoveAll(q => !updatedQuestionIds.Contains(q.Id) && q.Id != 0);
+
+                await context.SaveChangesAsync();
+
+                return existingQuiz;
+            }
+            catch (ArgumentException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating quiz: " + ex.Message);
+            }
         }
+
 
         public void Validate(QuizDTO model)
         {

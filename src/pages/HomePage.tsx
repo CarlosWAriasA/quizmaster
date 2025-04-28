@@ -19,7 +19,7 @@ const HomePage = () => {
             </p>
             <Button
               className="cursor-pointer"
-              onClick={() => navigate("/quiz/create")}
+              onClick={() => navigate("/quiz/edit")}
             >
               Create Quiz
             </Button>
@@ -27,9 +27,7 @@ const HomePage = () => {
 
           <div className="p-6 bg-gray-800 rounded-xl shadow-md">
             <h2 className="text-xl font-semibold mb-2">View My Quizzes</h2>
-            <p className="text-gray-400 mb-4">
-              Browse quizzes you've created or taken in the past.
-            </p>
+            <p className="text-gray-400 mb-4">Browse quizzes you've created.</p>
             <Button
               onClick={() => navigate("/quiz/list")}
               className="cursor-pointer"

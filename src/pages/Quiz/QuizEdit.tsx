@@ -1,27 +1,93 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Label, TextInput, Textarea } from "flowbite-react";
 import { ToastHelper } from "../../utils/ToastHelper";
 import { RequestHelper } from "../../utils/RequestHelper";
 import { useErrorHandler } from "../../hooks/userErrorHandler";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { useSearchParams } from "react-router-dom";
+import { HiBackspace, HiOutlineTrash } from "react-icons/hi";
+
+interface Option {
+  id?: number;
+  text: string;
+}
 
 interface Question {
+  id?: number;
   text: string;
-  options: string[];
+  options: Option[];
   correctIndexes: number[];
 }
 
-const CreateQuiz = () => {
+interface QuizOptionDTO {
+  id: number;
+  title: string;
+  isCorrect: boolean;
+  questionId: number;
+}
+
+interface QuizQuestionDTO {
+  id: number;
+  title: string;
+  quizId: number;
+  options: QuizOptionDTO[];
+}
+
+interface QuizDTO {
+  id: number;
+  title: string;
+  description?: string;
+  userId: number;
+  questions: QuizQuestionDTO[];
+}
+
+const QuizEdit = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([
-    { text: "", options: ["", ""], correctIndexes: [] },
+    { text: "", options: [{ text: "" }, { text: "" }], correctIndexes: [] },
   ]);
   const [currentPage, setCurrentPage] = useState(0);
   const { handleError } = useErrorHandler();
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const isClone = searchParams.get("clone") === "true";
+
+  const fetchQuiz = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await RequestHelper.get<{ data: QuizDTO }>(`Quiz/${id}`);
+      const quiz = res.data;
+      setTitle(isClone ? `Copy of ${quiz.title}` : quiz.title);
+      setDescription(quiz.description || "");
+      setQuestions(
+        quiz.questions.map((q) => ({
+          id: q.id,
+          text: q.title,
+          options: q.options.map((opt) => ({
+            id: opt.id,
+            text: opt.title,
+          })),
+          correctIndexes: q.options
+            .map((opt, idx) => (opt.isCorrect ? idx : -1))
+            .filter((idx) => idx !== -1),
+        }))
+      );
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, isClone, handleError]);
+
+  useEffect(() => {
+    if (id) {
+      fetchQuiz();
+    }
+  }, [id, fetchQuiz]);
 
   const handleQuestionChange = (index: number, value: string) => {
     const updated = [...questions];
@@ -35,7 +101,7 @@ const CreateQuiz = () => {
     value: string
   ) => {
     const updated = [...questions];
-    updated[qIndex].options[oIndex] = value;
+    updated[qIndex].options[oIndex].text = value;
     setQuestions(updated);
   };
 
@@ -52,7 +118,7 @@ const CreateQuiz = () => {
 
   const addOption = (qIndex: number) => {
     const updated = [...questions];
-    updated[qIndex].options.push("");
+    updated[qIndex].options.push({ text: "" });
     setQuestions(updated);
   };
 
@@ -68,7 +134,7 @@ const CreateQuiz = () => {
   const addQuestion = () => {
     setQuestions([
       ...questions,
-      { text: "", options: ["", ""], correctIndexes: [] },
+      { text: "", options: [{ text: "" }, { text: "" }], correctIndexes: [] },
     ]);
     setCurrentPage(questions.length);
   };
@@ -109,19 +175,34 @@ const CreateQuiz = () => {
 
     setLoading(true);
     try {
-      await RequestHelper.post("Quiz/create", {
+      const isCreating = !id || isClone;
+
+      await RequestHelper.post(`Quiz/${isCreating ? "create" : "update"}`, {
+        ...(isCreating ? {} : { Id: id }),
         Title: title,
         Description: description,
         Questions: questions.map((q) => ({
+          Id: isCreating ? 0 : q.id || 0,
           Title: q.text,
           Options: q.options.map((opt, idx) => ({
-            Title: opt,
+            Id: isCreating ? 0 : opt.id || 0,
+            Title: opt.text,
             IsCorrect: q.correctIndexes.includes(idx),
           })),
         })),
       });
-      ToastHelper.success("Quiz created successfully");
-      navigate("/quiz/list");
+
+      ToastHelper.success(
+        isClone
+          ? "Quiz cloned successfully"
+          : isCreating
+          ? "Quiz created successfully"
+          : "Quiz updated successfully"
+      );
+
+      if (isCreating) {
+        navigate("/quiz/list");
+      }
     } catch (error) {
       handleError(error);
     } finally {
@@ -134,8 +215,15 @@ const CreateQuiz = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white py-12 px-4 md:px-8">
       <div className="max-w-3xl mx-auto">
+        {loading && (
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <LoadingSpinner width={50} height={50} />
+          </div>
+        )}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Create New Quiz</h1>
+          <h1 className="text-3xl font-bold">
+            {isClone ? "Clone Quiz" : id ? "Edit Quiz" : "Create New Quiz"}
+          </h1>
           <Button
             color="gray"
             onClick={() => navigate(-1)}
@@ -179,7 +267,7 @@ const CreateQuiz = () => {
                   onClick={() => removeQuestion(currentPage)}
                   className="cursor-pointer"
                 >
-                  Remove
+                  <HiBackspace className="h-5 w-5" />
                 </Button>
               )}
             </div>
@@ -203,7 +291,7 @@ const CreateQuiz = () => {
                     className="cursor-pointer"
                   />
                   <TextInput
-                    value={opt}
+                    value={opt?.text}
                     placeholder={`Option ${oIndex + 1}`}
                     onChange={(e) =>
                       handleOptionChange(currentPage, oIndex, e.target.value)
@@ -217,7 +305,7 @@ const CreateQuiz = () => {
                       onClick={() => removeOption(currentPage, oIndex)}
                       className="cursor-pointer"
                     >
-                      X
+                      <HiOutlineTrash className="h-5 w-5" />
                     </Button>
                   )}
                 </div>
@@ -285,4 +373,4 @@ const CreateQuiz = () => {
   );
 };
 
-export default CreateQuiz;
+export default QuizEdit;

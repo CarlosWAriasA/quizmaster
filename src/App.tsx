@@ -7,7 +7,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import HomePage from "./pages/HomePage";
 import PublicRoute from "./components/PublicRoute";
 import LoadingSpinner from "./components/LoadingSpinner";
-import CreateQuiz from "./pages/Quiz/CreateQuiz";
+import QuizEdit from "./pages/Quiz/QuizEdit";
 import MyQuizzes from "./pages/Quiz/MyQuizzes";
 
 function App() {
@@ -62,10 +62,10 @@ function App() {
       />
 
       <Route
-        path="/quiz/create"
+        path="/quiz/edit"
         element={
           <PrivateRoute>
-            <CreateQuiz />
+            <QuizEdit />
           </PrivateRoute>
         }
       />
