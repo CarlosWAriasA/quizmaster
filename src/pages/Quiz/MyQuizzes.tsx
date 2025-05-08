@@ -14,6 +14,7 @@ interface Quiz {
   title: string;
   description?: string;
   dateCreated: string;
+  code?: string;
 }
 
 interface ListQuizResponse {
@@ -30,7 +31,7 @@ const MyQuizzes = () => {
 
   const fetchQuizzes = useCallback(async () => {
     try {
-      const res = await RequestHelper.get<ListQuizResponse>("Quiz/list");
+      const res = await RequestHelper.get<ListQuizResponse>("Quiz/listByUser");
       setQuizzes(res.data);
     } catch (error) {
       handleError(error);
@@ -120,7 +121,7 @@ const MyQuizzes = () => {
           </Button>
         </div>
 
-        <div className="h-[82vh] overflow-y-auto p-2 rounded-lg bg-gray-800 border border-gray-700">
+        <div className="h-[75vh] overflow-y-auto p-2 rounded-lg bg-gray-800 border border-gray-700">
           {loading ? (
             <div className="grid gap-6">
               {[...Array(7)].map((_, index) => (
@@ -200,7 +201,13 @@ const MyQuizzes = () => {
                         <Button
                           color="blue"
                           size="xs"
-                          onClick={() => console.log("Share", quiz.id)}
+                          onClick={() => {
+                            const shareUrl = `${window.location.origin}/quiz/take/code/${quiz.code}`;
+                            navigator.clipboard.writeText(shareUrl);
+                            ToastHelper.success(
+                              "Quiz link copied to clipboard!"
+                            );
+                          }}
                           className="cursor-pointer"
                         >
                           <HiShare className="h-5 w-5" />

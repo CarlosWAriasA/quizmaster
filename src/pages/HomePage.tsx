@@ -42,7 +42,7 @@ const HomePage = () => {
               Join a quiz by entering a quiz code or selecting one available.
             </p>
             <Button
-              onClick={() => navigate("/take-quiz")}
+              onClick={() => navigate("/quiz/take")}
               className="cursor-pointer"
             >
               Take Quiz

@@ -9,5 +9,6 @@ namespace QuizMaster.Data
         public DbSet<Quiz> Quiz { get; set; }
         public DbSet<QuizQuestion> QuizQuestion { get; set; }
         public DbSet<QuizOption> QuizOption { get; set; }
+        public DbSet<QuizResult> QuizResult { get; set; }
     }
 }

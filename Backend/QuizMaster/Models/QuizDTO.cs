@@ -7,6 +7,7 @@ namespace QuizMaster.Models
         public int Id { get; set; }
         public required string Title { get; set; }
         public string? Description { get; set; }
+        public string? Code { get; set; }
         public int UserId { get; set; }
         public DateTime? DateCreated { get; set; }
         public DateTime? LastUpdate { get; set; }

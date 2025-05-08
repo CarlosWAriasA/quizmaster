@@ -18,10 +18,27 @@ namespace QuizMaster.Controllers
         {
             try
             {
+                List<Quiz> quizzes = await quizService.List();
+                List<QuizDTO> dtos = quizzes.Select(MapperHelper.ToQuizDto).ToList();
+
+                return ApiResponse.Success(dtos);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse.Exception(ex);
+            }
+        }
+
+        [Authorize]
+        [HttpGet("listByUser")]
+        public async Task<IActionResult> ListByUser()
+        {
+            try
+            {
                 string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 int userNumberId = Convert.ToInt32(userId);
 
-                List<Quiz> quizzes = await quizService.List(userNumberId);
+                List<Quiz> quizzes = await quizService.ListByUser(userNumberId);
                 List<QuizDTO> dtos = quizzes.Select(MapperHelper.ToQuizDto).ToList();
 
                 return ApiResponse.Success(dtos);
@@ -57,6 +74,30 @@ namespace QuizMaster.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("by-code/{code}")]
+        public async Task<IActionResult> GetByCode(string code)
+        {
+            try
+            {
+                string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userNumberId = Convert.ToInt32(userId);
+                Entities.Quiz? quiz = await quizService.GetByCode(code, userNumberId);
+
+                if (quiz == null)
+                {
+                    return ApiResponse.Error("Quiz not found", 404);
+                }
+
+                QuizDTO dto = MapperHelper.ToQuizDto(quiz);
+
+                return ApiResponse.Success(dto);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse.Exception(ex);
+            }
+        }
 
         [Authorize]
         [HttpPost("create")]
@@ -117,5 +158,29 @@ namespace QuizMaster.Controllers
             }
         }
 
+        [Authorize]
+        [HttpPost("complete")]
+        public async Task<IActionResult> CompleteQuiz([FromBody] QuizResultDTO model)
+        {
+            try
+            {
+                string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrWhiteSpace(userId))
+                    return Unauthorized("User not authenticated");
+
+                model.UserId = Convert.ToInt32(userId);
+
+                QuizResult? result = await quizService.Complete(model);
+                return ApiResponse.Success(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return ApiResponse.Exception(ex);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse.Exception(ex);
+            }
+        }
     }
 }

@@ -7,59 +7,6 @@ namespace QuizMaster.Services.Quiz
 {
     public class QuizService(DataContext context) : IQuizService
     {
-        public async Task<Entities.Quiz?> Create(QuizDTO model)
-        {
-            try
-            {
-                Validate(model);
-
-                Entities.Quiz newQuiz = new()
-                {
-                    Title = model.Title,                
-                    Description = model.Description,
-                    UserId = model.UserId,
-                    DateCreated = DateTime.Now
-                };
-
-                foreach (QuizDTO.QuizQuestionDTO question in model.Questions)
-                {
-                    QuizQuestion newQuestion = new()
-                    {
-                        Title = question.Title,
-                        DateCreated= DateTime.Now,                    
-                    };
-
-                    foreach (QuizDTO.QuizOptionDTO option in question.Options)
-                    {
-                        QuizOption newOption = new()
-                        {
-                            Title = option.Title,
-                            DateCreated = DateTime.Now,
-                            IsCorrect = option.IsCorrect,                        
-                        };
-
-                        newQuestion.Options.Add(newOption);
-                    }
-
-                    newQuiz.Questions.Add(newQuestion);
-                }
-
-                context.Quiz.Add(newQuiz);
-
-                await context.SaveChangesAsync();
-
-                return newQuiz;
-            }
-            catch (ArgumentException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Ha ocurrido un error " + ex.Message);
-            }
-        }
-
         public async Task Delete(int quizId)
         {
             try
@@ -101,7 +48,39 @@ namespace QuizMaster.Services.Quiz
             }
         }
 
-        public async Task<List<Entities.Quiz>> List(int userId)
+        public async Task<Entities.Quiz?> GetByCode(string code, int userId)
+        {
+            try
+            {
+                Entities.Quiz? quiz = await context.Quiz.Include(q => q.Questions).ThenInclude(q => q.Options).FirstOrDefaultAsync(q => q.Code == code && q.UserId == userId);
+
+                return quiz;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error retrieving quiz: " + ex.Message);
+            }
+        }
+
+        public async Task<List<Entities.Quiz>> List()
+        {
+            try
+            {
+                List<Entities.Quiz> quizzes = await context.Quiz                    
+                    .Include(q => q.Questions)
+                    .ThenInclude(q => q.Options)
+                    .OrderByDescending(q => q.DateCreated)
+                    .ToListAsync();
+
+                return quizzes;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error retrieving quizzes: " + ex.Message);
+            }
+        }
+
+        public async Task<List<Entities.Quiz>> ListByUser(int userId)
         {
             try
             {
@@ -116,10 +95,63 @@ namespace QuizMaster.Services.Quiz
             }
             catch (Exception ex)
             {
-                throw new Exception("Error retrieving quizzes: " + ex.Message);
+                throw new Exception("Error retrieving quizzes by user: " + ex.Message);
             }
         }
 
+        public async Task<Entities.Quiz?> Create(QuizDTO model)
+        {
+            try
+            {
+                Validate(model);
+
+                Entities.Quiz newQuiz = new()
+                {
+                    Title = model.Title,
+                    Description = model.Description,
+                    Code = GenerateCode(),
+                    UserId = model.UserId,
+                    DateCreated = DateTime.Now
+                };
+
+                foreach (QuizDTO.QuizQuestionDTO question in model.Questions)
+                {
+                    QuizQuestion newQuestion = new()
+                    {
+                        Title = question.Title,
+                        DateCreated = DateTime.Now,
+                    };
+
+                    foreach (QuizDTO.QuizOptionDTO option in question.Options)
+                    {
+                        QuizOption newOption = new()
+                        {
+                            Title = option.Title,
+                            DateCreated = DateTime.Now,
+                            IsCorrect = option.IsCorrect,
+                        };
+
+                        newQuestion.Options.Add(newOption);
+                    }
+
+                    newQuiz.Questions.Add(newQuestion);
+                }
+
+                context.Quiz.Add(newQuiz);
+
+                await context.SaveChangesAsync();
+
+                return newQuiz;
+            }
+            catch (ArgumentException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ha ocurrido un error " + ex.Message);
+            }
+        }
 
         public async Task<Entities.Quiz?> Update(QuizDTO model)
         {
@@ -141,6 +173,11 @@ namespace QuizMaster.Services.Quiz
 
                 existingQuiz.Title = model.Title;
                 existingQuiz.Description = model.Description;
+
+                if (string.IsNullOrWhiteSpace(existingQuiz.Code))
+                {
+                    existingQuiz.Code = GenerateCode();
+                }
 
                 HashSet<int> updatedQuestionIds = [];
 
@@ -215,6 +252,20 @@ namespace QuizMaster.Services.Quiz
             }
         }
 
+        private string GenerateCode()
+        {
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var random = new Random();
+
+            string code;
+            do
+            {
+                code = new string(Enumerable.Repeat(chars, 6)
+                    .Select(s => s[random.Next(s.Length)]).ToArray());
+            } while (context.Quiz.Any(q => q.Code == code));
+
+            return code;
+        }
 
         public void Validate(QuizDTO model)
         {
@@ -252,6 +303,45 @@ namespace QuizMaster.Services.Quiz
                         throw new ArgumentException("All options must have a title");
                     }
                 }
+            }
+        }
+
+        public async Task<QuizResult?> Complete(QuizResultDTO model)
+        {
+            try
+            {
+                if (model.QuizId <= 0 || model.UserId <= 0 || model.TotalQuestions <= 0)
+                {
+                    throw new ArgumentException("Invalid quiz result data.");
+                }
+
+                int percentage = (int)Math.Round((double)model.Score * 100 / model.TotalQuestions);
+                int duration = (int)(model.EndTime - model.StartTime).TotalSeconds;
+
+                QuizResult result = new()
+                {
+                    QuizId = model.QuizId,
+                    UserId = model.UserId,
+                    Score = model.Score,
+                    TotalQuestions = model.TotalQuestions,
+                    Percentage = percentage,
+                    StartTime = model.StartTime,
+                    EndTime = model.EndTime,
+                    DurationSeconds = duration
+                };
+
+                context.QuizResult.Add(result);
+                await context.SaveChangesAsync();
+
+                return result;
+            }
+            catch (ArgumentException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error saving quiz result: " + ex.Message);
             }
         }
     }

@@ -9,6 +9,8 @@ import PublicRoute from "./components/PublicRoute";
 import LoadingSpinner from "./components/LoadingSpinner";
 import QuizEdit from "./pages/Quiz/QuizEdit";
 import MyQuizzes from "./pages/Quiz/MyQuizzes";
+import TakeQuizHome from "./pages/Quiz/TakeQuizHome";
+import TakeQuiz from "./pages/Quiz/TakeQuiz";
 
 function App() {
   const { isAuthenticated, loadingSession } = useContext(AuthContext);
@@ -75,6 +77,33 @@ function App() {
         element={
           <PrivateRoute>
             <MyQuizzes />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/quiz/take"
+        element={
+          <PrivateRoute>
+            <TakeQuizHome />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/quiz/take/:id"
+        element={
+          <PrivateRoute>
+            <TakeQuiz />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/quiz/take/code/:code"
+        element={
+          <PrivateRoute>
+            <TakeQuiz />
           </PrivateRoute>
         }
       />

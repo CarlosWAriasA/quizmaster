@@ -12,6 +12,7 @@ namespace QuizMaster.Helpers
                 Id = entity.Id,
                 Title = entity.Title,
                 Description = entity.Description,
+                Code = entity.Code,
                 UserId = entity.UserId,
                 DateCreated = entity.DateCreated,
                 LastUpdate = entity.LastUpdate,
