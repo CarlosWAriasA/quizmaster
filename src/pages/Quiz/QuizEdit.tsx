@@ -220,52 +220,81 @@ const QuizEdit = () => {
             <LoadingSpinner width={50} height={50} />
           </div>
         )}
+
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">
-            {isClone ? "Clone Quiz" : id ? "Edit Quiz" : "Create New Quiz"}
-          </h1>
-          <Button
-            color="gray"
-            onClick={() => navigate(-1)}
-            className="cursor-pointer"
-          >
-            Back
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              color="gray"
+              onClick={() => navigate(-1)}
+              className="cursor-pointer flex items-center gap-2 hover:scale-105 transition-transform duration-200"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              Back
+            </Button>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+              {isClone ? "Clone Quiz" : id ? "Edit Quiz" : "Create New Quiz"}
+            </h1>
+          </div>
         </div>
 
-        <div className="mb-6">
-          <Label htmlFor="title">Title</Label>
-          <TextInput
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 cursor-pointer"
-          />
-        </div>
+        <div className="mb-8 p-6 bg-gray-800 rounded-xl border border-gray-700 shadow-lg">
+          <div className="mb-6">
+            <Label htmlFor="title" className="text-lg font-medium mb-2 block">
+              Title
+            </Label>
+            <TextInput
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-1 cursor-pointer bg-gray-700 border-gray-600 focus:border-purple-500"
+              placeholder="Enter quiz title"
+            />
+          </div>
 
-        <div className="mb-8">
-          <Label htmlFor="desc">Description (optional)</Label>
-          <Textarea
-            id="desc"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            className="mt-1 cursor-pointer"
-          />
+          <div className="mb-4">
+            <Label htmlFor="desc" className="text-lg font-medium mb-2 block">
+              Description (optional)
+            </Label>
+            <Textarea
+              id="desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="mt-1 cursor-pointer bg-gray-700 border-gray-600 focus:border-purple-500"
+              placeholder="Enter quiz description"
+            />
+          </div>
         </div>
 
         {question && (
-          <div className="mb-8 p-5 bg-gray-800 rounded-xl border border-gray-700">
-            <div className="flex justify-between items-center mb-2">
-              <Label>
-                Question {currentPage + 1} of {questions.length}
-              </Label>
+          <div className="mb-8 p-6 bg-gray-800 rounded-xl border border-gray-700 shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-medium">
+                  Question {currentPage + 1}
+                </span>
+                <span className="text-sm text-gray-400">
+                  of {questions.length}
+                </span>
+              </div>
               {questions.length > 1 && (
                 <Button
                   color="red"
                   size="xs"
                   onClick={() => removeQuestion(currentPage)}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:scale-105 transition-transform duration-200"
                 >
                   <HiBackspace className="h-5 w-5" />
                 </Button>
@@ -278,17 +307,20 @@ const QuizEdit = () => {
               onChange={(e) =>
                 handleQuestionChange(currentPage, e.target.value)
               }
-              className="mb-4 cursor-pointer"
+              className="mb-6 cursor-pointer bg-gray-700 border-gray-600 focus:border-purple-500"
             />
 
-            <div className="max-h-52 overflow-y-auto mb-4 p-2">
+            <div className="max-h-[15vh] overflow-y-auto mb-4 p-2 space-y-3">
               {question.options.map((opt, oIndex) => (
-                <div key={oIndex} className="flex items-center gap-2 mb-2">
+                <div
+                  key={oIndex}
+                  className="flex items-center gap-3 p-2 bg-gray-700 rounded-lg"
+                >
                   <input
                     type="checkbox"
                     checked={question.correctIndexes.includes(oIndex)}
                     onChange={() => toggleCorrectOption(currentPage, oIndex)}
-                    className="cursor-pointer"
+                    className="cursor-pointer w-5 h-5 text-purple-500 rounded focus:ring-purple-500"
                   />
                   <TextInput
                     value={opt?.text}
@@ -296,14 +328,14 @@ const QuizEdit = () => {
                     onChange={(e) =>
                       handleOptionChange(currentPage, oIndex, e.target.value)
                     }
-                    className="flex-1 cursor-pointer"
+                    className="flex-1 cursor-pointer bg-gray-600 border-gray-500 focus:border-purple-500"
                   />
                   {question.options.length > 2 && (
                     <Button
                       color="red"
                       size="xs"
                       onClick={() => removeOption(currentPage, oIndex)}
-                      className="cursor-pointer"
+                      className="cursor-pointer hover:scale-105 transition-transform duration-200"
                     >
                       <HiOutlineTrash className="h-5 w-5" />
                     </Button>
@@ -315,7 +347,7 @@ const QuizEdit = () => {
             <Button
               size="xs"
               onClick={() => addOption(currentPage)}
-              className="cursor-pointer"
+              className="cursor-pointer hover:scale-105 transition-transform duration-200"
               disabled={question.options.length >= 10}
             >
               + Add Option
@@ -323,50 +355,52 @@ const QuizEdit = () => {
           </div>
         )}
 
-        <div className="flex justify-between mb-6">
-          <Button
-            disabled={currentPage === 0}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-            className="cursor-pointer"
-            color={"yellow"}
-          >
-            Previous
-          </Button>
-          <Button
-            disabled={currentPage === questions.length - 1}
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            className="cursor-pointer"
-            color={"yellow"}
-          >
-            Next
-          </Button>
-        </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between mb-4">
+            <Button
+              disabled={currentPage === 0}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              className="cursor-pointer hover:scale-105 transition-transform duration-200"
+              color="yellow"
+            >
+              Previous
+            </Button>
+            <Button
+              disabled={currentPage === questions.length - 1}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              className="cursor-pointer hover:scale-105 transition-transform duration-200"
+              color="yellow"
+            >
+              Next
+            </Button>
+          </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button
-            onClick={addQuestion}
-            color="blue"
-            className="cursor-pointer"
-            disabled={questions.length >= 50}
-          >
-            + Add Question
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button
+              onClick={addQuestion}
+              color="blue"
+              className="cursor-pointer hover:scale-105 transition-transform duration-200"
+              disabled={questions.length >= 50}
+            >
+              + Add Question
+            </Button>
 
-          <Button
-            color="purple"
-            onClick={handleSubmit}
-            className="cursor-pointer flex justify-center items-center gap-2"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <LoadingSpinner width={20} height={20} />
-                Saving...
-              </>
-            ) : (
-              "Save Quiz"
-            )}
-          </Button>
+            <Button
+              color="purple"
+              onClick={handleSubmit}
+              className="cursor-pointer flex justify-center items-center gap-2 hover:scale-105 transition-transform duration-200"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <LoadingSpinner width={20} height={20} />
+                  Saving...
+                </>
+              ) : (
+                "Save Quiz"
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

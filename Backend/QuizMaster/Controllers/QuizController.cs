@@ -50,6 +50,26 @@ namespace QuizMaster.Controllers
         }
 
         [Authorize]
+        [HttpGet("results")]
+        public async Task<IActionResult> GetResults()
+        {
+            try
+            {
+                string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                int userNumberId = Convert.ToInt32(userId);
+
+                List<QuizResult> quizzes = await quizService.GetResults(userNumberId);
+                List<QuizResultDTO> dtos = quizzes.Select(MapperHelper.ToQuizResultDto).ToList();
+
+                return ApiResponse.Success(dtos);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse.Exception(ex);
+            }
+        }
+
+        [Authorize]
         [HttpGet("{quizId}")]
         public async Task<IActionResult> GetById(int quizId)
         {

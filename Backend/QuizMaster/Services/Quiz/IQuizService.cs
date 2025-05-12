@@ -6,6 +6,7 @@ namespace QuizMaster.Services.Quiz
     {
         Task<List<Entities.Quiz>> List();
         Task<List<Entities.Quiz>> ListByUser(int userId);
+        Task<List<Entities.QuizResult>> GetResults(int userId);
         Task<Entities.Quiz?> GetById(int quizId, int userId);
         Task<Entities.Quiz?> GetByCode(string code, int userId);
         void Validate(QuizDTO model);

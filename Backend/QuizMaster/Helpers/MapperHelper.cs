@@ -5,8 +5,9 @@ namespace QuizMaster.Helpers
 {
     public static class MapperHelper
     {
-        public static QuizDTO ToQuizDto(Quiz entity)
+        public static QuizDTO? ToQuizDto(Quiz? entity = null)
         {
+            if (entity == null) return null;
             return new QuizDTO
             {
                 Id = entity.Id,
@@ -29,6 +30,23 @@ namespace QuizMaster.Helpers
                         QuestionId = o.QuestionId
                     }).ToList() ?? []
                 }).ToList() ?? []
+            };
+        }
+
+        public static QuizResultDTO ToQuizResultDto(QuizResult entity)
+        {
+            return new QuizResultDTO
+            {
+                Id = entity.Id,
+                QuizId = entity.QuizId,
+                UserId = entity.UserId,
+                Score = entity.Score,
+                TotalQuestions = entity.TotalQuestions,
+                Percentage = entity.Percentage,
+                StartTime = entity.StartTime,
+                EndTime = entity.EndTime,
+                DurationSeconds = entity.DurationSeconds,
+                Quiz = ToQuizDto(entity.Quiz)
             };
         }
 

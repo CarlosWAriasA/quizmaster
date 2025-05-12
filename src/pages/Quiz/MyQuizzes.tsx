@@ -107,16 +107,44 @@ const MyQuizzes = () => {
           <Button
             color="gray"
             onClick={handleGoBack}
-            className="cursor-pointer"
+            className="cursor-pointer flex items-center gap-2 hover:scale-105 transition-transform duration-200"
           >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
             Back
           </Button>
-          <h1 className="text-3xl font-bold">My Quizzes</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+            My Quizzes
+          </h1>
           <Button
             color="purple"
             onClick={handleCreateNewQuiz}
-            className="cursor-pointer"
+            className="cursor-pointer flex items-center gap-2 hover:scale-105 transition-transform duration-200"
           >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
             Create Quiz
           </Button>
         </div>
@@ -141,78 +169,119 @@ const MyQuizzes = () => {
           ) : quizzes.length === 0 ? (
             <div className="text-center text-gray-400">No quizzes found.</div>
           ) : (
-            <div className="grid gap-2">
+            <div className="grid gap-4">
               {quizzes.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="p-5 bg-gray-700 rounded-xl shadow-md border border-gray-600 hover:shadow-lg transition-shadow"
+                  className="p-6 bg-gray-700 rounded-xl shadow-md border border-gray-600 hover:shadow-lg transition-all duration-300 hover:bg-gray-650"
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h2 className="text-xl font-bold text-white">
-                        {quiz.title}
-                      </h2>
-                      {quiz.description && (
-                        <p className="text-gray-300">{quiz.description}</p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">
-                        Created on:{" "}
-                        {new Date(quiz.dateCreated).toLocaleString()}
-                      </p>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h2 className="text-2xl font-bold text-white mb-2">
+                          {quiz.title}
+                        </h2>
+                        {quiz.description && (
+                          <p className="text-gray-300 text-sm">
+                            {quiz.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <Tooltip content="Edit Quiz">
+                          <Button
+                            color="purple"
+                            size="xs"
+                            onClick={() => navigate(`/quiz/edit?id=${quiz.id}`)}
+                            className="cursor-pointer hover:scale-110 transition-transform"
+                          >
+                            <HiPencilAlt className="h-5 w-5" />
+                          </Button>
+                        </Tooltip>
+
+                        <Tooltip content="Clone Quiz">
+                          <Button
+                            color="yellow"
+                            size="xs"
+                            onClick={() =>
+                              navigate(`/quiz/edit?id=${quiz.id}&clone=true`)
+                            }
+                            className="cursor-pointer hover:scale-110 transition-transform"
+                          >
+                            <HiDuplicate className="h-5 w-5" />
+                          </Button>
+                        </Tooltip>
+
+                        <Tooltip content="Delete Quiz">
+                          <Button
+                            color="red"
+                            size="xs"
+                            onClick={() => confirmDelete(quiz.id)}
+                            className="cursor-pointer hover:scale-110 transition-transform"
+                          >
+                            <HiTrash className="h-5 w-5" />
+                          </Button>
+                        </Tooltip>
+
+                        <Tooltip content="Share Quiz">
+                          <Button
+                            color="blue"
+                            size="xs"
+                            onClick={() => {
+                              const shareUrl = `${window.location.origin}/quiz/take/code/${quiz.code}`;
+                              navigator.clipboard.writeText(shareUrl);
+                              ToastHelper.success(
+                                "Quiz link copied to clipboard!"
+                              );
+                            }}
+                            className="cursor-pointer hover:scale-110 transition-transform"
+                          >
+                            <HiShare className="h-5 w-5" />
+                          </Button>
+                        </Tooltip>
+                      </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Tooltip content="Edit Quiz">
-                        <Button
-                          color="purple"
-                          size="xs"
-                          onClick={() => navigate(`/quiz/edit?id=${quiz.id}`)}
-                          className="cursor-pointer"
-                        >
-                          <HiPencilAlt className="h-5 w-5" />
-                        </Button>
-                      </Tooltip>
-
-                      <Tooltip content="Clone Quiz">
-                        <Button
-                          color="yellow"
-                          size="xs"
-                          onClick={() =>
-                            navigate(`/quiz/edit?id=${quiz.id}&clone=true`)
-                          }
-                          className="cursor-pointer"
-                        >
-                          <HiDuplicate className="h-5 w-5" />
-                        </Button>
-                      </Tooltip>
-
-                      <Tooltip content="Delete Quiz">
-                        <Button
-                          color="red"
-                          size="xs"
-                          onClick={() => confirmDelete(quiz.id)}
-                          className="cursor-pointer"
-                        >
-                          <HiTrash className="h-5 w-5" />
-                        </Button>
-                      </Tooltip>
-
-                      <Tooltip content="Share Quiz">
-                        <Button
-                          color="blue"
-                          size="xs"
-                          onClick={() => {
-                            const shareUrl = `${window.location.origin}/quiz/take/code/${quiz.code}`;
-                            navigator.clipboard.writeText(shareUrl);
-                            ToastHelper.success(
-                              "Quiz link copied to clipboard!"
-                            );
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <HiShare className="h-5 w-5" />
-                        </Button>
-                      </Tooltip>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-600">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <span>
+                            Created:{" "}
+                            {new Date(quiz.dateCreated).toLocaleString()}
+                          </span>
+                        </div>
+                        {quiz.code && (
+                          <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                              />
+                            </svg>
+                            <span>Code: {quiz.code}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -2,7 +2,7 @@ import { FormEvent, useState, useContext, useEffect } from "react";
 import Logo from "../../assets/logo.png";
 import { Button, Label, TextInput } from "flowbite-react";
 import { ToastHelper } from "../../utils/ToastHelper";
-import { HiMail, HiLockClosed } from "react-icons/hi";
+import { HiMail, HiLockClosed, HiArrowRight } from "react-icons/hi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { useErrorHandler } from "../../hooks/userErrorHandler";
@@ -66,67 +66,95 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="w-full max-w-md bg-gray-800 bg-opacity-80 p-8 rounded-2xl shadow-2xl">
-        <div className="flex justify-center mb-6">
-          <div className="bg-white rounded-full p-4 shadow-lg">
-            <img src={Logo} alt="QuizMaster Logo" className="w-16 h-16" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+      <div className="w-full max-w-md mx-4">
+        <div className="bg-gray-800/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-gray-700/50">
+          <div className="flex flex-col items-center mb-8">
+            <div className="bg-gradient-to-br from-purple-500 to-blue-500 p-1 rounded-full shadow-lg">
+              <div className="bg-white rounded-full p-3">
+                <img src={Logo} alt="QuizMaster Logo" className="w-16 h-16" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 mt-4">
+              QuizMaster
+            </h2>
+            <p className="text-gray-400 text-sm mt-2">
+              Welcome back! Please login to your account.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-gray-300">
+                Email
+              </Label>
+              <div className="relative">
+                <TextInput
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  icon={HiMail}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-gray-700/50 border-gray-600 focus:border-purple-500 focus:ring-purple-500"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-gray-300">
+                Password
+              </Label>
+              <div className="relative">
+                <TextInput
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  icon={HiLockClosed}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-gray-700/50 border-gray-600 focus:border-purple-500 focus:ring-purple-500"
+                />
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-4">
+                <LoadingSpinner width={40} height={40} />
+              </div>
+            ) : (
+              <Button
+                type="submit"
+                color="purple"
+                size="lg"
+                className="w-full cursor-pointer bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 transition-all duration-200 transform hover:scale-[1.02]"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  Sign In
+                  <HiArrowRight className="w-5 h-5" />
+                </span>
+              </Button>
+            )}
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-purple-400 hover:text-purple-300 transition-colors font-medium"
+              >
+                Register here
+              </Link>
+            </p>
           </div>
         </div>
 
-        <h2 className="text-3xl font-bold text-gray-100 text-center mb-8">
-          QuizMaster
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <TextInput
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              icon={HiMail}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <TextInput
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              icon={HiLockClosed}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-          {loading ? (
-            <LoadingSpinner width={50} height={50} />
-          ) : (
-            <Button
-              type="submit"
-              color={"purple"}
-              size="lg"
-              className="w-full cursor-pointer"
-            >
-              Sign In
-            </Button>
-          )}
-        </form>
-
-        <p className="mt-6 text-center text-gray-400 text-sm">
-          Don’t have an account?{" "}
-          <Link
-            to="/register"
-            className="text-purple-400 hover:text-purple-300 transition-colors"
-          >
-            Register here
-          </Link>
-        </p>
+        <div className="text-center mt-8">
+          <p className="text-gray-500 text-sm">
+            © {new Date().getFullYear()} QuizMaster. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Authentication/Login";
 import Register from "./pages/Authentication/Register";
 import PrivateRoute from "./components/PrivateRoute";
+import PrivateLayout from "./components/PrivateLayout";
 import HomePage from "./pages/HomePage";
 import PublicRoute from "./components/PublicRoute";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -11,6 +12,7 @@ import QuizEdit from "./pages/Quiz/QuizEdit";
 import MyQuizzes from "./pages/Quiz/MyQuizzes";
 import TakeQuizHome from "./pages/Quiz/TakeQuizHome";
 import TakeQuiz from "./pages/Quiz/TakeQuiz";
+import QuizResultsList from "./pages/Quiz/QuizResultList";
 
 function App() {
   const { isAuthenticated, loadingSession } = useContext(AuthContext);
@@ -58,7 +60,9 @@ function App() {
         path="/home"
         element={
           <PrivateRoute>
-            <HomePage />
+            <PrivateLayout>
+              <HomePage />
+            </PrivateLayout>
           </PrivateRoute>
         }
       />
@@ -67,7 +71,9 @@ function App() {
         path="/quiz/edit"
         element={
           <PrivateRoute>
-            <QuizEdit />
+            <PrivateLayout>
+              <QuizEdit />
+            </PrivateLayout>
           </PrivateRoute>
         }
       />
@@ -76,7 +82,9 @@ function App() {
         path="/quiz/list"
         element={
           <PrivateRoute>
-            <MyQuizzes />
+            <PrivateLayout>
+              <MyQuizzes />
+            </PrivateLayout>
           </PrivateRoute>
         }
       />
@@ -85,7 +93,9 @@ function App() {
         path="/quiz/take"
         element={
           <PrivateRoute>
-            <TakeQuizHome />
+            <PrivateLayout>
+              <TakeQuizHome />
+            </PrivateLayout>
           </PrivateRoute>
         }
       />
@@ -94,7 +104,9 @@ function App() {
         path="/quiz/take/:id"
         element={
           <PrivateRoute>
-            <TakeQuiz />
+            <PrivateLayout>
+              <TakeQuiz />
+            </PrivateLayout>
           </PrivateRoute>
         }
       />
@@ -103,7 +115,20 @@ function App() {
         path="/quiz/take/code/:code"
         element={
           <PrivateRoute>
-            <TakeQuiz />
+            <PrivateLayout>
+              <TakeQuiz />
+            </PrivateLayout>
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/quiz/results"
+        element={
+          <PrivateRoute>
+            <PrivateLayout>
+              <QuizResultsList />
+            </PrivateLayout>
           </PrivateRoute>
         }
       />

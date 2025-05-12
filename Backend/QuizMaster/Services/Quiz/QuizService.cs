@@ -78,6 +78,23 @@ namespace QuizMaster.Services.Quiz
             {
                 throw new Exception("Error retrieving quizzes: " + ex.Message);
             }
+        }       
+        
+        public async Task<List<Entities.QuizResult>> GetResults(int userId)
+        {
+            try
+            {
+                List<Entities.QuizResult> quizzes = await context.QuizResult                    
+                    .Include(q => q.Quiz)
+                    .OrderByDescending(q => q.StartTime)
+                    .ToListAsync();
+
+                return quizzes;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error retrieving quizzes: " + ex.Message);
+            }
         }
 
         public async Task<List<Entities.Quiz>> ListByUser(int userId)
