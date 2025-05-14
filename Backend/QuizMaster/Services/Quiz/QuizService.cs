@@ -128,6 +128,7 @@ namespace QuizMaster.Services.Quiz
                     Description = model.Description,
                     Code = GenerateCode(),
                     UserId = model.UserId,
+                    RandomQuestions = model.RandomQuestions,
                     DateCreated = DateTime.Now
                 };
 
@@ -136,6 +137,7 @@ namespace QuizMaster.Services.Quiz
                     QuizQuestion newQuestion = new()
                     {
                         Title = question.Title,
+                        RandomOptions = question.RandomOptions,
                         DateCreated = DateTime.Now,
                     };
 
@@ -176,12 +178,7 @@ namespace QuizMaster.Services.Quiz
             {
                 Entities.Quiz? existingQuiz = await context.Quiz
                     .Include(q => q.Questions).ThenInclude(q => q.Options)
-                    .FirstOrDefaultAsync(q => q.Id == model.Id);
-
-                if (existingQuiz == null)
-                {
-                    throw new ArgumentException("Quiz not found");
-                }
+                    .FirstOrDefaultAsync(q => q.Id == model.Id) ?? throw new ArgumentException("Quiz not found");
 
                 if (existingQuiz.UserId != model.UserId)
                 {
@@ -190,6 +187,7 @@ namespace QuizMaster.Services.Quiz
 
                 existingQuiz.Title = model.Title;
                 existingQuiz.Description = model.Description;
+                existingQuiz.RandomQuestions = model.RandomQuestions;
 
                 if (string.IsNullOrWhiteSpace(existingQuiz.Code))
                 {
@@ -206,6 +204,7 @@ namespace QuizMaster.Services.Quiz
                     {
                         existingQuestion.Title = questionDto.Title;
                         existingQuestion.LastUpdate = DateTime.Now;
+                        existingQuestion.RandomOptions = questionDto.RandomOptions;
                         updatedQuestionIds.Add(existingQuestion.Id);
 
                         
@@ -241,6 +240,7 @@ namespace QuizMaster.Services.Quiz
                         {
                             Title = questionDto.Title,
                             DateCreated = DateTime.Now,
+                            RandomOptions = questionDto.RandomOptions,
                             Options = questionDto.Options.Select(o => new QuizOption
                             {
                                 Title = o.Title,

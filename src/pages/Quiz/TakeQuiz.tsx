@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "flowbite-react";
+import { Button, Radio, Checkbox } from "flowbite-react";
 import { RequestHelper } from "../../utils/RequestHelper";
 import { useErrorHandler } from "../../hooks/userErrorHandler";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { HiCheck, HiArrowRight } from "react-icons/hi";
+
+interface QuizOption {
+  id: number;
+  title: string;
+  isCorrect: boolean;
+}
 
 interface QuizQuestion {
   id: number;
   title: string;
-  options: {
-    id: number;
-    title: string;
-    isCorrect: boolean;
-  }[];
+  options: QuizOption[];
 }
 
 interface Quiz {
@@ -22,30 +25,33 @@ interface Quiz {
   questions: QuizQuestion[];
 }
 
+interface Answer {
+  questionId: number;
+  selectedOptionId?: number | null;
+  selectedOptionIds?: number[];
+}
+
 const TakeQuiz = () => {
   const { id, code } = useParams();
   const navigate = useNavigate();
   const { handleError } = useErrorHandler();
+
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [startTime] = useState(new Date());
-  const [answers, setAnswers] = useState<
-    { questionId: number; selectedOptionId: number }[]
-  >([]);
+  const [answers, setAnswers] = useState<Answer[]>([]);
 
+  // Efecto para cargar el quiz
   useEffect(() => {
     const fetchQuiz = async () => {
       setLoading(true);
       try {
-        let res;
-
-        if (id) {
-          res = await RequestHelper.get<{ data: Quiz }>(`Quiz/${id}`);
-        } else if (code) {
-          res = await RequestHelper.get<{ data: Quiz }>(`Quiz/by-code/${code}`);
-        }
+        const res = id
+          ? await RequestHelper.get<{ data: Quiz }>(`Quiz/${id}`)
+          : await RequestHelper.get<{ data: Quiz }>(`Quiz/by-code/${code}`);
 
         if (res?.data) {
           setQuiz(res.data);
@@ -62,58 +68,82 @@ const TakeQuiz = () => {
     if (id || code) fetchQuiz();
   }, [id, code, handleError]);
 
-  const handleNext = async () => {
-    if (!quiz) return;
+  const currentQuestionData = quiz?.questions[currentQuestion];
+  const isMultipleChoice =
+    (currentQuestionData?.options?.filter((opt) => opt.isCorrect).length ?? 0) >
+    1;
 
-    const question = quiz.questions[currentQuestion];
+  const handleOptionSelect = (optionId: number) => {
+    if (!currentQuestionData) return;
 
-    if (selectedOption !== null) {
-      setAnswers((prev) => [
-        ...prev,
-        { questionId: question.id, selectedOptionId: selectedOption },
-      ]);
+    if (isMultipleChoice) {
+      setSelectedOptions((prev) =>
+        prev.includes(optionId)
+          ? prev.filter((id) => id !== optionId)
+          : [...prev, optionId]
+      );
+    } else {
+      setSelectedOption(optionId);
     }
+  };
+
+  const isAnswerCorrect = (question: QuizQuestion, answer: Answer): boolean => {
+    if (isMultipleChoice) {
+      const correctOptions = question.options
+        .filter((opt) => opt.isCorrect)
+        .map((opt) => opt.id);
+      return (
+        correctOptions.length === answer.selectedOptionIds?.length &&
+        correctOptions.every((id) => answer.selectedOptionIds?.includes(id))
+      );
+    } else {
+      const selected = question.options.find(
+        (o) => o.id === answer.selectedOptionId
+      );
+      return selected?.isCorrect || false;
+    }
+  };
+
+  const handleNext = async () => {
+    if (!quiz || !currentQuestionData) return;
+
+    const currentAnswer: Answer = {
+      questionId: currentQuestionData.id,
+      ...(isMultipleChoice
+        ? { selectedOptionIds: selectedOptions }
+        : { selectedOptionId: selectedOption }),
+    };
+    setAnswers((prev) => [...prev, currentAnswer]);
 
     const isLast = currentQuestion === quiz.questions.length - 1;
 
     if (isLast) {
       const endTime = new Date();
       const totalQuestions = quiz.questions.length;
-
-      let correct = 0;
-      for (const ans of answers.concat({
-        questionId: question.id,
-        selectedOptionId: selectedOption!,
-      })) {
-        const questionMatch = quiz.questions.find(
-          (q) => q.id === ans.questionId
-        );
-        const selected = questionMatch?.options.find(
-          (o) => o.id === ans.selectedOptionId
-        );
-        if (selected?.isCorrect) correct++;
-      }
-
-      const durationSeconds = Math.floor((+endTime - +startTime) / 1000);
-      const percentage = Math.round((correct / totalQuestions) * 100);
+      const correctAnswers = answers
+        .concat(currentAnswer)
+        .filter((ans, index) =>
+          isAnswerCorrect(quiz.questions[index], ans)
+        ).length;
 
       try {
         await RequestHelper.post("Quiz/complete", {
           quizId: quiz.id,
-          score: correct,
+          score: correctAnswers,
           totalQuestions,
-          percentage,
+          percentage: Math.round((correctAnswers / totalQuestions) * 100),
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
-          durationSeconds,
+          durationSeconds: Math.floor((+endTime - +startTime) / 1000),
         });
         navigate("/quiz/finished");
       } catch (error) {
         handleError(error);
       }
     } else {
-      setCurrentQuestion(currentQuestion + 1);
+      setCurrentQuestion((prev) => prev + 1);
       setSelectedOption(null);
+      setSelectedOptions([]);
     }
   };
 
@@ -125,7 +155,7 @@ const TakeQuiz = () => {
     );
   }
 
-  if (!quiz) {
+  if (!quiz || !currentQuestionData) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gradient-to-b from-gray-900 to-gray-800 text-white">
         <div className="text-center p-8 bg-gray-800 rounded-xl border border-gray-700">
@@ -134,8 +164,6 @@ const TakeQuiz = () => {
       </div>
     );
   }
-
-  const question = quiz.questions[currentQuestion];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-6 flex justify-center items-center">
@@ -166,41 +194,50 @@ const TakeQuiz = () => {
                 ((currentQuestion + 1) / quiz.questions.length) * 100
               }%`,
             }}
-          ></div>
+          />
         </div>
 
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-6 text-gray-100">
-            {question.title}
+            {currentQuestionData.title}
           </h2>
-
           <div className="grid gap-4">
-            {question.options.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => setSelectedOption(option.id)}
-                className={`w-full text-left px-6 py-4 rounded-xl transition-all duration-200 border-2 ${
-                  selectedOption === option.id
-                    ? "bg-green-500/10 border-green-500 text-green-400"
-                    : "bg-gray-700/50 hover:bg-gray-700 border-gray-600 hover:border-gray-500 text-gray-300"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedOption === option.id
-                        ? "border-green-500 bg-green-500"
-                        : "border-gray-500"
-                    }`}
-                  >
-                    {selectedOption === option.id && (
-                      <div className="w-2 h-2 rounded-full bg-white"></div>
+            {currentQuestionData.options.map((option) => {
+              const isSelected = isMultipleChoice
+                ? selectedOptions.includes(option.id)
+                : selectedOption === option.id;
+
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => handleOptionSelect(option.id)}
+                  className={`w-full text-left px-6 py-4 rounded-xl transition-all duration-200 border-2 ${
+                    isSelected
+                      ? "bg-green-500/10 border-green-500 text-green-400"
+                      : "bg-gray-700/50 hover:bg-gray-700 border-gray-600 hover:border-gray-500 text-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {isMultipleChoice ? (
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={() => {}}
+                        className="w-5 h-5"
+                        color="green"
+                      />
+                    ) : (
+                      <Radio
+                        checked={isSelected}
+                        onChange={() => {}}
+                        className="w-5 h-5"
+                        color="green"
+                      />
                     )}
+                    <span className="text-lg">{option.title}</span>
                   </div>
-                  <span className="text-lg">{option.title}</span>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -208,44 +245,26 @@ const TakeQuiz = () => {
           <Button
             color="green"
             onClick={handleNext}
-            disabled={selectedOption === null}
+            disabled={
+              isMultipleChoice
+                ? selectedOptions.length === 0
+                : selectedOption === null
+            }
             className="cursor-pointer px-8 py-2.5 text-lg font-medium hover:scale-105 transition-transform duration-200"
           >
-            {currentQuestion === quiz.questions.length - 1 ? (
-              <span className="flex items-center gap-2">
-                Finish Quiz
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                Next
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </span>
-            )}
+            <span className="flex items-center gap-2">
+              {currentQuestion === quiz.questions.length - 1 ? (
+                <>
+                  Finish Quiz
+                  <HiCheck className="w-5 h-5" />
+                </>
+              ) : (
+                <>
+                  Next
+                  <HiArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </span>
           </Button>
         </div>
       </div>

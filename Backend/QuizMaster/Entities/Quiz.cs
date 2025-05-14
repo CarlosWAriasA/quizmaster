@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
 
 namespace QuizMaster.Entities
 {
@@ -15,6 +14,7 @@ namespace QuizMaster.Entities
         public DateTime DateCreated { get; set; }
         public DateTime? LastUpdate { get; set; }
         public required int UserId { get; set; }
+        public bool? RandomQuestions { get; set; }
         public User? User { get; set; }
         public List<QuizQuestion> Questions { get; set; } = [];
     }

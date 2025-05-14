@@ -59,7 +59,6 @@ async function baseRequest<T = unknown>(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.log(response);
     throw new Error(errorText || response.statusText);
   }
 
@@ -78,7 +77,6 @@ async function tryRefreshToken(): Promise<string | null> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: Number(userId), refreshToken }),
     });
-    console.log(res);
     if (!res.ok) return null;
 
     const data = await res.json();

@@ -17,11 +17,13 @@ namespace QuizMaster.Helpers
                 UserId = entity.UserId,
                 DateCreated = entity.DateCreated,
                 LastUpdate = entity.LastUpdate,
+                RandomQuestions = entity.RandomQuestions,
                 Questions = entity.Questions?.Select(q => new QuizDTO.QuizQuestionDTO
                 {
                     Id = q.Id,
                     Title = q.Title,
                     QuizId = q.QuizId,
+                    RandomOptions = q.RandomOptions,
                     Options = q.Options?.Select(o => new QuizDTO.QuizOptionDTO
                     {
                         Id = o.Id,

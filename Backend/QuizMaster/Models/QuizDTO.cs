@@ -8,6 +8,7 @@ namespace QuizMaster.Models
         public required string Title { get; set; }
         public string? Description { get; set; }
         public string? Code { get; set; }
+        public bool? RandomQuestions { get; set; }
         public int UserId { get; set; }
         public DateTime? DateCreated { get; set; }
         public DateTime? LastUpdate { get; set; }
@@ -19,6 +20,7 @@ namespace QuizMaster.Models
             public int Id { get; set; }
             public required string Title { get; set; }
             public int QuizId { get; set; }
+            public bool? RandomOptions { get; set; }
             public Quiz? Quiz { get; set; }
             public List<QuizOptionDTO> Options { get; set; } = [];
         }

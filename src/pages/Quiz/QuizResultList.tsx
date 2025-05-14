@@ -4,7 +4,7 @@ import { Button } from "flowbite-react";
 import { RequestHelper } from "../../utils/RequestHelper";
 import { useErrorHandler } from "../../hooks/userErrorHandler";
 import Skeleton from "react-loading-skeleton";
-
+import { HiArrowLeft } from "react-icons/hi";
 interface Quiz {
   id: number;
   title: string;
@@ -62,8 +62,9 @@ const QuizResultsList = () => {
           <Button
             color="gray"
             onClick={handleGoBack}
-            className="cursor-pointer"
+            className="cursor-pointer flex items-center gap-2 hover:scale-105 transition-transform duration-200"
           >
+            <HiArrowLeft className="w-5 h-5" />
             Back
           </Button>
           <h1 className="text-3xl font-bold text-center flex-1">
