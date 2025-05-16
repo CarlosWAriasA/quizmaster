@@ -16,6 +16,7 @@ interface QuizQuestion {
   id: number;
   title: string;
   options: QuizOption[];
+  randomOptions: boolean;
 }
 
 interface Quiz {
@@ -23,6 +24,7 @@ interface Quiz {
   title: string;
   description?: string;
   questions: QuizQuestion[];
+  randomQuestions: boolean;
 }
 
 interface Answer {
@@ -44,7 +46,6 @@ const TakeQuiz = () => {
   const [startTime] = useState(new Date());
   const [answers, setAnswers] = useState<Answer[]>([]);
 
-  // Efecto para cargar el quiz
   useEffect(() => {
     const fetchQuiz = async () => {
       setLoading(true);
@@ -54,7 +55,20 @@ const TakeQuiz = () => {
           : await RequestHelper.get<{ data: Quiz }>(`Quiz/by-code/${code}`);
 
         if (res?.data) {
-          setQuiz(res.data);
+          const processedQuiz = { ...res.data };
+
+          if (processedQuiz.randomQuestions) {
+            processedQuiz.questions = shuffleArray(processedQuiz.questions);
+          }
+
+          processedQuiz.questions = processedQuiz.questions.map((question) => ({
+            ...question,
+            options: question.randomOptions
+              ? shuffleArray(question.options)
+              : question.options,
+          }));
+
+          setQuiz(processedQuiz);
         } else {
           throw new Error("Quiz not found");
         }
@@ -70,8 +84,17 @@ const TakeQuiz = () => {
 
   const currentQuestionData = quiz?.questions[currentQuestion];
   const isMultipleChoice =
-    (currentQuestionData?.options?.filter((opt) => opt.isCorrect).length ?? 0) >
-    1;
+    (currentQuestionData?.options?.filter((opt) => opt.isCorrect) ?? [])
+      .length > 1;
+
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
 
   const handleOptionSelect = (optionId: number) => {
     if (!currentQuestionData) return;
@@ -87,20 +110,36 @@ const TakeQuiz = () => {
     }
   };
 
-  const isAnswerCorrect = (question: QuizQuestion, answer: Answer): boolean => {
+  const calculateQuestionScore = (
+    question: QuizQuestion,
+    answer: Answer
+  ): number => {
+    const correctOptions = question.options.filter((opt) => opt.isCorrect);
+
     if (isMultipleChoice) {
-      const correctOptions = question.options
-        .filter((opt) => opt.isCorrect)
-        .map((opt) => opt.id);
-      return (
-        correctOptions.length === answer.selectedOptionIds?.length &&
-        correctOptions.every((id) => answer.selectedOptionIds?.includes(id))
-      );
+      const selectedCorrect =
+        answer.selectedOptionIds?.filter(
+          (id) => question.options.find((opt) => opt.id === id)?.isCorrect
+        ).length ?? 0;
+
+      const selectedIncorrect =
+        answer.selectedOptionIds?.filter(
+          (id) =>
+            question.options.find((opt) => opt.id === id)?.isCorrect === false
+        ).length ?? 0;
+
+      if (selectedIncorrect > 0) return 0;
+
+      if (selectedCorrect < correctOptions.length) {
+        return selectedCorrect / correctOptions.length;
+      }
+
+      return 1;
     } else {
       const selected = question.options.find(
         (o) => o.id === answer.selectedOptionId
       );
-      return selected?.isCorrect || false;
+      return selected?.isCorrect ? 1 : 0;
     }
   };
 
@@ -120,23 +159,27 @@ const TakeQuiz = () => {
     if (isLast) {
       const endTime = new Date();
       const totalQuestions = quiz.questions.length;
-      const correctAnswers = answers
+
+      const totalScore = answers
         .concat(currentAnswer)
-        .filter((ans, index) =>
-          isAnswerCorrect(quiz.questions[index], ans)
-        ).length;
+        .reduce((sum, answer, index) => {
+          const question = quiz.questions[index];
+          return sum + calculateQuestionScore(question, answer);
+        }, 0);
+
+      const percentage = Math.round((totalScore / totalQuestions) * 100);
 
       try {
         await RequestHelper.post("Quiz/complete", {
           quizId: quiz.id,
-          score: correctAnswers,
+          score: totalScore,
           totalQuestions,
-          percentage: Math.round((correctAnswers / totalQuestions) * 100),
+          percentage,
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
           durationSeconds: Math.floor((+endTime - +startTime) / 1000),
         });
-        navigate("/quiz/finished");
+        navigate("/quiz/results");
       } catch (error) {
         handleError(error);
       }

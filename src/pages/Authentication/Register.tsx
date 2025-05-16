@@ -33,6 +33,7 @@ const Register: React.FC = () => {
     }
     if (fullName.length < 6) {
       ToastHelper.warning("Full name must be at least 6 characters long");
+      return;
     }
 
     if (!email) {
@@ -58,6 +59,7 @@ const Register: React.FC = () => {
 
     setLoading(true);
     try {
+      console.log(fullName, email, password);
       await register(fullName, email, password);
       ToastHelper.success("Account created successfully");
       navigate("/login");
@@ -69,7 +71,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 pt-5">
       <div className="w-full max-w-md mx-4">
         <div className="bg-gray-800/90 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-gray-700/50">
           <div className="flex flex-col items-center mb-8">

@@ -8,11 +8,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QuizMaster.Data;
 using QuizMaster.Entities;
+using System.Net.Mail;
+using QuizMaster.Services.Email;
 
 namespace QuizMaster.Services.Auth
 {
     public class AuthService(DataContext context, IConfiguration configuration) : IAuthService
     {
+        private readonly IEmailService? _emailService;
+
+        public AuthService(DataContext context, IConfiguration configuration, IEmailService emailService) : this(context, configuration)
+        {
+            _emailService = emailService;
+        }
+
         public async Task<TokenResponseDTO?> Login(UserDTO model)
         {
             if (string.IsNullOrWhiteSpace(model.Email) || !model.Email.Contains('@'))
@@ -80,6 +89,25 @@ namespace QuizMaster.Services.Auth
 
             string hashedPassword = new PasswordHasher<User>().HashPassword(newUser, model.Password);
             newUser.PasswordHash = hashedPassword;
+
+            if (_emailService != null)
+            {
+                try
+                {
+                    string? htmlBody = File.ReadAllText("Templates/Welcome.html").Replace("{{UserName}}", newUser.UserName);
+
+                    await _emailService.SendEmailAsync(
+                        newUser.Email,
+                        "🎉 Welcome to QuizMaster!",
+                        htmlBody
+                    );
+                }
+                catch (SmtpException)
+                {
+                    throw new ArgumentException("The email could not be sent. Please make sure the email address is valid.");
+                }
+            }
+
 
             context.Users.Add(newUser);
             await context.SaveChangesAsync();

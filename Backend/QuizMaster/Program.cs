@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using QuizMaster.Data;
 using Scalar.AspNetCore;
 using QuizMaster.Services.Quiz;
+using QuizMaster.Services.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 var app = builder.Build();
 
