@@ -3,15 +3,25 @@
 @source "../.flowbite-react/class-list.json";
 
 *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: rgba(199, 199, 199, 0.6);
+  background-color: rgba(85, 82, 82, 0.8);
   border-radius: 10px;
 }
 
 *::-webkit-scrollbar-track {
-  background-color: transparent;
+  background-color: #3c3c3c;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
